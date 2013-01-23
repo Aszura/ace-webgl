@@ -14,9 +14,7 @@ function Mesh(context){
 			thisObj.vertices = json.vertices;
 			thisObj.normals = json.normals;
 			for(key in json.faces){
-				if(key % 11 != 0 && key % 4 != 0){
-					thisObj.faces.push(json.faces[key]);
-				}
+				thisObj.faces.push(json.faces[key]);
 			}
 			thisObj.uvs = json.uvs;
 			callback();
