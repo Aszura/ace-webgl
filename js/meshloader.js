@@ -15,7 +15,7 @@ function MeshLoader(context){
 			mesh.iboOffset = iboSize;
 			vboSize += mesh.vertices.length;
 			vboSize += mesh.normals.length;
-			vboSize += mesh.uvs.length;
+			vboSize += mesh.uvs[0].length;
 			iboSize += mesh.faces.length;
 			callback();
 		});
@@ -30,8 +30,8 @@ function MeshLoader(context){
 			offset += this.meshes[key].vertices.length;
 			gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, new Float32Array(this.meshes[key].normals));
 			offset += this.meshes[key].normals.length;
-			gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, new Float32Array(this.meshes[key].uvs));
-			offset += this.meshes[key].uvs.length;
+			gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, new Float32Array(this.meshes[key].uvs[0]));
+			offset += this.meshes[key].uvs[0].length;
 		}
 
 		offset = 0;

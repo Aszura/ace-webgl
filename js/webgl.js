@@ -29,6 +29,12 @@ function WebGL(canvas){
 	var rPyramid = 0;
 	var rCube = 0;
 	var lastTime = 0;
+	var dirLight = new DirectionalLight(
+		vec3.fromValues(0.0, 1.0, -1.0),
+		vec3.fromValues(4.0, 4.0, 4.0),
+		vec3.fromValues(1.0, 1.0, 1.0),
+		vec3.fromValues(0.5, 0.5, 0.5)
+	);
 	
 	//Methods
 	//Public:
@@ -38,6 +44,7 @@ function WebGL(canvas){
 		initShaders(function(){		
 			gl.clearColor(0.0, 0.0, 0.0, 1.0);
 			gl.enable(gl.DEPTH_TEST);
+			gl.enable(gl.TEXTURE_2D);
 			
 			load(function(){
 				update();
@@ -62,9 +69,9 @@ function WebGL(canvas){
 	function initShaders(callback, errorCallback){
 		var fragmentShader;
 		var vertexShader;
-		getShader(gl, document.URL + "js/shader/simple.frag", gl.FRAGMENT_SHADER, function(fshader){
+		getShader(gl, document.URL + "js/shader/diffuse.frag", gl.FRAGMENT_SHADER, function(fshader){
 			fragmentShader = fshader;
-			getShader(gl, document.URL + "js/shader/simple.vert", gl.VERTEX_SHADER, function(vshader){
+			getShader(gl, document.URL + "js/shader/diffuse.vert", gl.VERTEX_SHADER, function(vshader){
 				vertexShader = vshader;
 				shaderProgram = gl.createProgram();
 				gl.attachShader(shaderProgram, vertexShader);
@@ -80,8 +87,21 @@ function WebGL(canvas){
 				shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
 				gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 				
+				shaderProgram.vertexNormalAttribute = gl.getAttribLocation(shaderProgram, "aVertexNormal");
+				gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
+				
+				shaderProgram.textureCoordAttribute = gl.getAttribLocation(shaderProgram, "aTextureCoord");
+				gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+				
 				shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
 				shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+				shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
+				
+				shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
+				shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightingDirection");
+				shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
+				shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
+				
 				callback();
 			}, function(){
 				alert("Couldn't load vertex shader.");
@@ -113,6 +133,16 @@ function WebGL(canvas){
 	function setMatrixUniforms() {
 		gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+		var normalMatrix = mat4.clone(mvMatrix);
+		mat4.invert(normalMatrix, normalMatrix);
+		mat4.transpose(normalMatrix, normalMatrix);
+		gl.uniformMatrix4fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+	}
+	
+	function setLightingUniforms(){
+		gl.uniform3fv(shaderProgram.directionalColorUniform, dirLight.diffuse);
+		gl.uniform3fv(shaderProgram.ambientColorUniform, dirLight.ambient);
+		gl.uniform3fv(shaderProgram.lightingDirectionUniform, dirLight.position);
 	}
 	
 	function mvPushMatrix() {
@@ -168,6 +198,7 @@ function WebGL(canvas){
 
 		meshLoader.Bind();
 		setMatrixUniforms();
+		setLightingUniforms();
 		meshLoader.meshes["spinne"].Draw(shaderProgram);
 		mvPopMatrix();
 	}
