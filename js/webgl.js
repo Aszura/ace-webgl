@@ -18,16 +18,18 @@ function WebGL(canvas){
 	
 	//Private:
 	var gl = null;
-	var mvMatrix = mat4.create();
-	var mvMatrixStack = [];
+	var mMatrix = mat4.create();
+	var mMatrixStack = [];
 	var pMatrix = mat4.create();
 	var meshLoader = null;
-	var pyramidVertexPositionBuffer = null;
-	var cubeVertexPositionBuffer = null;
-	var cubeVertexIndexBuffer = null;
+	// var pyramidVertexPositionBuffer = null;
+	// var cubeVertexPositionBuffer = null;
+	// var cubeVertexIndexBuffer = null;
 	var shaderProgram;
 	var rPyramid = 0;
 	var rCube = 0;
+	var camera;
+	var input;
 	var lastTime = 0;
 	var dirLight = new DirectionalLight(
 		vec3.fromValues(0.0, 1.0, -1.0),
@@ -40,6 +42,8 @@ function WebGL(canvas){
 	//Public:
 	this.Init = function(){
 		initGL(this.canvas);
+		camera = new Camera();
+		input = new Input(camera);
 		meshLoader = new MeshLoader(gl);
 		initShaders(function(){		
 			gl.clearColor(0.0, 0.0, 0.0, 1.0);
@@ -55,7 +59,9 @@ function WebGL(canvas){
 	//Private:	
 	function initGL(canvas){
 		try {
-			gl = canvas.getContext("experimental-webgl");
+			gl = canvas.getContext("experimental-webgl", { antialias: true });
+			canvas.width = window.innerWidth;
+			canvas.height = window.innerHeight;
 			gl.viewportWidth = canvas.width;
 			gl.viewportHeight = canvas.height;
 		} catch(e) {
@@ -94,7 +100,8 @@ function WebGL(canvas){
 				gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
 				
 				shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
-				shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+				shaderProgram.vMatrixUniform = gl.getUniformLocation(shaderProgram, "uVMatrix");
+				shaderProgram.mMatrixUniform = gl.getUniformLocation(shaderProgram, "uMMatrix");
 				shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
 				
 				shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
@@ -132,8 +139,9 @@ function WebGL(canvas){
 	
 	function setMatrixUniforms() {
 		gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
-		gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
-		var normalMatrix = mat4.clone(mvMatrix);
+		gl.uniformMatrix4fv(shaderProgram.vMatrixUniform, false, camera.vMatrix);
+		gl.uniformMatrix4fv(shaderProgram.mMatrixUniform, false, mMatrix);
+		var normalMatrix = mat4.clone(camera.vMatrix * mMatrix);
 		mat4.invert(normalMatrix, normalMatrix);
 		mat4.transpose(normalMatrix, normalMatrix);
 		gl.uniformMatrix4fv(shaderProgram.nMatrixUniform, false, normalMatrix);
@@ -145,16 +153,16 @@ function WebGL(canvas){
 		gl.uniform3fv(shaderProgram.lightingDirectionUniform, dirLight.position);
 	}
 	
-	function mvPushMatrix() {
-		var copy = mat4.clone(mvMatrix);
-		mvMatrixStack.push(copy);
+	function mPushMatrix() {
+		var copy = mat4.clone(mMatrix);
+		mMatrixStack.push(copy);
 	}
 
-	function mvPopMatrix() {
-		if (mvMatrixStack.length == 0) {
+	function mPopMatrix() {
+		if (mMatrixStack.length == 0) {
 			throw "Invalid popMatrix!";
 		}
-		mvMatrix = mvMatrixStack.pop();
+		mvMatrix = mMatrixStack.pop();
 	}
 	
 	function degToRad(degrees) {
@@ -182,6 +190,10 @@ function WebGL(canvas){
 
 			rPyramid += (90 * elapsed) / 1000.0;
 			rCube -= (75 * elapsed) / 1000.0;
+			
+			
+			camera.update(elapsed);
+			input.update(elapsed);
 		}
 		lastTime = timeNow;
 	}
@@ -190,16 +202,16 @@ function WebGL(canvas){
 		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
-		mat4.identity(mvMatrix);
+		mat4.identity(mMatrix);
+		mat4.translate(mMatrix, mMatrix, [-1.5, 1.0, -7.0]);
 		
-		mat4.translate(mvMatrix, mvMatrix, [-1.5, 1.0, -7.0]);
-		mvPushMatrix();
-		mat4.rotate(mvMatrix, mvMatrix, degToRad(rPyramid), [1, 1, 0]);
+		mPushMatrix();
+		//mat4.rotate(mvMatrix, mvMatrix, degToRad(rPyramid), [1, 1, 0]);
 
 		meshLoader.Bind();
 		setMatrixUniforms();
 		setLightingUniforms();
 		meshLoader.meshes["spinne"].Draw(shaderProgram);
-		mvPopMatrix();
+		mPopMatrix();
 	}
 }

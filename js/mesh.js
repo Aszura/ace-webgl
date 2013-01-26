@@ -43,11 +43,23 @@ function Mesh(context){
 	};
 	
 	function handleTextureLoaded(image, texture) {
+		
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
 		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		
+		//Anisotropic Filtering
+		var ext = gl.getExtension("MOZ_EXT_texture_filter_anisotropic");
+		if(ext == null){
+			ext = gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic");
+		}
+		if(ext != null){
+			var max_anisotropy = gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
+			gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropy);
+		}
+		
 		gl.bindTexture(gl.TEXTURE_2D, null);
 	}
 	
