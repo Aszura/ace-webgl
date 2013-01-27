@@ -1,6 +1,6 @@
 function Camera(){
 	// position
-	this.position = vec3.fromValues(0.0, 0.0, 0.0);
+	this.position = vec3.fromValues(0.0, 2.0, 0.0);
 	this.direction = vec3.create();
 	this.up = vec3.fromValues(0.0, 1.0, 0.0);
 	this.right = vec3.fromValues(1.0, 0.0, 0.0);

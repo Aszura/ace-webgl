@@ -10,10 +10,13 @@ function Mesh(context){
 	this.iboOffset = 0;
 	var thisObj = this;
 	var gl = context;
+	var mMatrix = mat4.create();
 	
-	this.Load = function(filename, callback){
+	this.Load = function(filename, position, quatRotation, scale, callback){
 		$.getJSON(filename, function(json){
-			parseModel(json, 1);
+			mat4.fromRotationTranslation(mMatrix, quatRotation, position);
+			mat4.scale(mMatrix, mMatrix, scale);
+			parseModel(json, 1.0);
 			//thisObj.uvs[0] = json.uvs[0];
 			// for(var i = 0; i < json.vertices.length; i+=3){
 				// thisObj.vertices.push(vec3.fromValues(json.vertices[i], json.vertices[i+1], json.vertices[i+2]));
@@ -36,10 +39,22 @@ function Mesh(context){
 				// thisObj.uvs.push(0);
 				// //thisObj.uvs.push(vec3.fromValues(json.uvs[0][i], json.uvs[0][i+1],0));
 			// }
-			loadTexture(json.materials[0].mapDiffuse, function(){
+			loadTexture(json.materials[thisObj.materialIndex].mapDiffuse, function(){
 				callback();
 			});
 		});
+	};
+	
+	this.Translate = function(vec){
+		mat4.translate(mMatrix, mMatrix, vec);
+	};
+	
+	this.Rotate = function(rad, vec){
+		mat4.rotate(mMatrix, mMatrix, rad, vec);
+	};
+	
+	this.Scale = function(vec){
+		mat4.scale(mMatrix, mMatrix, scale);
 	};
 	
 	function handleTextureLoaded(image, texture) {
@@ -73,10 +88,21 @@ function Mesh(context){
 		thisObj.texture.image.src = "models/" + textureName;
     }
 	
-	this.Draw = function(shaderProgram){
+	this.Draw = function(shaderProgram, camera){
+		//bind textures
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.texture);
 		gl.uniform1i(shaderProgram.samplerUniform, 0);
+		
+		//set model and normal matrices
+		gl.uniformMatrix4fv(shaderProgram.mMatrixUniform, false, mMatrix);
+		var normalMatrix = mat4.create();
+		mat4.multiply(normalMatrix, camera.vMatrix, mMatrix);
+		mat4.invert(normalMatrix, normalMatrix);
+		mat4.transpose(normalMatrix, normalMatrix);
+		gl.uniformMatrix4fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+		
+		//bind attributes and draw array
 		gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 		gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
 		gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);

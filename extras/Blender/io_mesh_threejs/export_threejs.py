@@ -561,7 +561,7 @@ def generate_face(f, faceIndex, normals, uv_layers, colors, mesh, option_normals
     # face color index
     # face vertex colors indices
 
-    faceData.append(faceType)
+    #faceData.append(faceType)
 
     # must clamp in case on polygons bigger than quads
 
@@ -569,28 +569,28 @@ def generate_face(f, faceIndex, normals, uv_layers, colors, mesh, option_normals
         index = f.vertices[i] + vertex_offset
         faceData.append(index)
 
-	if hasMaterial:
-		index = f.material_index + material_offset
-		faceData.append( index )
-
-	if hasFaceVertexUvs:
-		for layer_index, uvs in enumerate(uv_layers):
-			uv = get_uv_indices(faceIndex, uvs, mesh, layer_index)
-			for i in range(nVertices):
-				index = uv[i]
-				faceData.append(index)
-
-	if hasFaceVertexNormals:
-		n = get_normal_indices(f.vertices, normals, mesh)
-		for i in range(nVertices):
-			index = n[i]
-			faceData.append(index)
-
-	if hasFaceVertexColors:
-		c = get_color_indices(faceIndex, colors, mesh)
-		for i in range(nVertices):
-			index = c[i]
-			faceData.append(index)
+   # if hasMaterial:
+   #     index = f.material_index + material_offset
+   #     faceData.append( index )
+   #
+   # if hasFaceVertexUvs:
+   #     for layer_index, uvs in enumerate(uv_layers):
+   #         uv = get_uv_indices(faceIndex, uvs, mesh, layer_index)
+   #         for i in range(nVertices):
+   #             index = uv[i]
+   #             faceData.append(index)
+   #
+   # if hasFaceVertexNormals:
+   #     n = get_normal_indices(f.vertices, normals, mesh)
+   #     for i in range(nVertices):
+   #         index = n[i]
+   #         faceData.append(index)
+   #
+   # if hasFaceVertexColors:
+   #     c = get_color_indices(faceIndex, colors, mesh)
+   #     for i in range(nVertices):
+   #         index = c[i]
+   #         faceData.append(index)
 
     return ",".join( map(str, faceData) )
 

@@ -6,10 +6,29 @@ function MeshLoader(context){
 	var vboSize = 0;
 	var iboSize = 0;
 	
-	this.LoadMesh = function(name, filename, callback){
+	var thisObj = this;
+	
+	this.LoadScene = function(filename, callback){
+		$.getJSON(filename, function(json){
+			var i = 0;
+			for(key in json.objects){
+				var objectName = filename.slice(0,-2);
+				var position = vec3.fromValues(json.objects[key].position[0],json.objects[key].position[1],json.objects[key].position[2]);
+				var quatRotation = quat.fromValues(json.objects[key].quaternion[0], json.objects[key].quaternion[1], json.objects[key].quaternion[2], json.objects[key].quaternion[3]);
+				var scale = vec3.fromValues(json.objects[key].scale[0], json.objects[key].scale[1], json.objects[key].scale[2]);
+				thisObj.LoadMesh(key, objectName + key + ".js", position, quatRotation, scale, function(){
+					i++;
+					if(i == json.metadata.objects){
+						callback();
+					}					
+				});
+			}
+		});
+	};
+	
+	this.LoadMesh = function(name, filename, position, quatRotation, scale, callback){
 		var mesh = new Mesh(gl);
-		var thisObj = this;
-		mesh.Load(filename, function(){
+		mesh.Load(filename, position, quatRotation, scale,function(){
 			thisObj.meshes[name] = mesh;
 			mesh.vboOffset = vboSize;
 			mesh.iboOffset = iboSize;

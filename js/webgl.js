@@ -21,7 +21,7 @@ function WebGL(canvas){
 	var mMatrix = mat4.create();
 	var mMatrixStack = [];
 	var pMatrix = mat4.create();
-	var meshLoader = null;
+	var level = null;
 	// var pyramidVertexPositionBuffer = null;
 	// var cubeVertexPositionBuffer = null;
 	// var cubeVertexIndexBuffer = null;
@@ -32,10 +32,10 @@ function WebGL(canvas){
 	var input;
 	var lastTime = 0;
 	var dirLight = new DirectionalLight(
-		vec3.fromValues(0.0, 1.0, -1.0),
-		vec3.fromValues(4.0, 4.0, 4.0),
+		vec3.fromValues(0.0, 1.0, 1.0),
 		vec3.fromValues(1.0, 1.0, 1.0),
-		vec3.fromValues(0.5, 0.5, 0.5)
+		vec3.fromValues(0.2, 0.2, 0.2),
+		vec3.fromValues(0.2, 0.2, 0.2)
 	);
 	
 	//Methods
@@ -44,11 +44,13 @@ function WebGL(canvas){
 		initGL(this.canvas);
 		camera = new Camera();
 		input = new Input(camera);
-		meshLoader = new MeshLoader(gl);
+		level = new Level(gl);
 		initShaders(function(){		
 			gl.clearColor(0.0, 0.0, 0.0, 1.0);
 			gl.enable(gl.DEPTH_TEST);
 			gl.enable(gl.TEXTURE_2D);
+			gl.enable(gl.CULL_FACE);
+			gl.cullFace(gl.BACK);
 			
 			load(function(){
 				update();
@@ -107,6 +109,7 @@ function WebGL(canvas){
 				shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
 				shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightingDirection");
 				shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
+				shaderProgram.specularColorUniform = gl.getUniformLocation(shaderProgram, "uSpecularColor");
 				shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 				
 				callback();
@@ -140,16 +143,12 @@ function WebGL(canvas){
 	function setMatrixUniforms() {
 		gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
 		gl.uniformMatrix4fv(shaderProgram.vMatrixUniform, false, camera.vMatrix);
-		gl.uniformMatrix4fv(shaderProgram.mMatrixUniform, false, mMatrix);
-		var normalMatrix = mat4.clone(camera.vMatrix * mMatrix);
-		mat4.invert(normalMatrix, normalMatrix);
-		mat4.transpose(normalMatrix, normalMatrix);
-		gl.uniformMatrix4fv(shaderProgram.nMatrixUniform, false, normalMatrix);
 	}
 	
 	function setLightingUniforms(){
 		gl.uniform3fv(shaderProgram.directionalColorUniform, dirLight.diffuse);
 		gl.uniform3fv(shaderProgram.ambientColorUniform, dirLight.ambient);
+		gl.uniform3fv(shaderProgram.specularColorUniform, dirLight.specular);
 		gl.uniform3fv(shaderProgram.lightingDirectionUniform, dirLight.position);
 	}
 	
@@ -170,11 +169,9 @@ function WebGL(canvas){
     }
 	
 	function load(callback){
-		meshLoader.LoadMesh("spinne", "models/spinne.js", function(){
-			meshLoader.BindToBuffers();
+		level.load(function(){
 			callback();
 		});
-		
 	}
 	
 	function update(){
@@ -190,10 +187,9 @@ function WebGL(canvas){
 
 			rPyramid += (90 * elapsed) / 1000.0;
 			rCube -= (75 * elapsed) / 1000.0;
-			
-			
-			camera.update(elapsed);
+			level.update(elapsed);
 			input.update(elapsed);
+			camera.update(elapsed);
 		}
 		lastTime = timeNow;
 	}
@@ -202,16 +198,11 @@ function WebGL(canvas){
 		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 		mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
-		mat4.identity(mMatrix);
-		mat4.translate(mMatrix, mMatrix, [-1.5, 1.0, -7.0]);
 		
 		mPushMatrix();
-		//mat4.rotate(mvMatrix, mvMatrix, degToRad(rPyramid), [1, 1, 0]);
-
-		meshLoader.Bind();
 		setMatrixUniforms();
 		setLightingUniforms();
-		meshLoader.meshes["spinne"].Draw(shaderProgram);
+		level.draw(shaderProgram,camera);
 		mPopMatrix();
 	}
 }
