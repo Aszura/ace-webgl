@@ -11,8 +11,12 @@ function Level(context){
 		// });
 		
 		meshLoader.LoadScene("models/shootermesh/shootermesh.js", function(){
-			meshLoader.BindToBuffers();
-			callback();
+			meshLoader.LoadScene("models/water_sky.js", function(){
+				meshLoader.meshes["Sky"].lit = false;
+				meshLoader.meshes["Water"].lit = false;
+				meshLoader.BindToBuffers();
+				callback();
+			});
 		});
 	};
 	

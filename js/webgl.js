@@ -106,6 +106,7 @@ function WebGL(canvas){
 				shaderProgram.mMatrixUniform = gl.getUniformLocation(shaderProgram, "uMMatrix");
 				shaderProgram.nMatrixUniform = gl.getUniformLocation(shaderProgram, "uNMatrix");
 				
+				shaderProgram.lightsOnUniform = gl.getUniformLocation(shaderProgram, "uLightsOn");
 				shaderProgram.ambientColorUniform = gl.getUniformLocation(shaderProgram, "uAmbientColor");
 				shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightingDirection");
 				shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
@@ -197,7 +198,7 @@ function WebGL(canvas){
 	function draw(){
 		gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-		mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0);
+		mat4.perspective(pMatrix, 45, gl.viewportWidth / gl.viewportHeight, 0.1, 1000.0);
 		
 		mPushMatrix();
 		setMatrixUniforms();

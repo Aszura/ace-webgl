@@ -8,6 +8,7 @@ function Mesh(context){
 	this.texture = null;
 	this.vboOffset = 0;
 	this.iboOffset = 0;
+	this.lit = true;
 	var thisObj = this;
 	var gl = context;
 	var mMatrix = mat4.create();
@@ -89,10 +90,11 @@ function Mesh(context){
     }
 	
 	this.Draw = function(shaderProgram, camera){
-		//bind textures
+		//bind textures and lit
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.texture);
 		gl.uniform1i(shaderProgram.samplerUniform, 0);
+		gl.uniform1i(shaderProgram.lightsOnUniform, this.lit);
 		
 		//set model and normal matrices
 		gl.uniformMatrix4fv(shaderProgram.mMatrixUniform, false, mMatrix);
