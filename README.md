@@ -27,7 +27,7 @@ Features
 
 -) Level of Detail
 
--) Alpha Blending
+-) Alpha Blending & Sorting
 
 -) JSON Importer/Blender Exporter (Modified version from THREE.js source)
 
