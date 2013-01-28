@@ -29,7 +29,7 @@ Features
 
 -) Alpha Blending
 
--) JSON Importer/Blender Exporter (Modified version of THREE.js)
+-) JSON Importer/Blender Exporter (Modified version from THREE.js source)
 
 -) Fullscreen & Pointer Lock
 
