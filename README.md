@@ -6,6 +6,7 @@ Ace WebGL is a game engine / tech demo for the WebGL technology. It is a project
 Works best in Chrome. Not as fast, but also works in Firefox. You need an up-to-date version of these browsers.
 
 Controls: WASD + Mouse
+
 Click for fullscreen and mouse lock.
 
 Test page: http://www.notebook-play.de/ace-webgl/
