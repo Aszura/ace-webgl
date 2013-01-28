@@ -33,6 +33,8 @@ Features
 
 -) Fullscreen & Pointer Lock
 
+-) Lit/Unlit Meshes
+
 Used libraries
 =========
 -) glMatrix
