@@ -11,13 +11,15 @@ function webGL_start(){
 	}
 }
 
+var gl = null;
+var progressbar;
+
 function WebGL(canvas){
 	//Variables
 	//Public:
 	this.canvas = canvas;
-	
 	//Private:
-	var gl = null;
+	progressbar = new ProgressBar();
 	var mMatrix = mat4.create();
 	var mMatrixStack = [];
 	var pMatrix = mat4.create();
@@ -48,6 +50,7 @@ function WebGL(canvas){
 		initShaders(function(){		
 			gl.clearColor(0.0, 0.0, 0.0, 1.0);
 			gl.enable(gl.DEPTH_TEST);
+			gl.depthFunc( gl.LEQUAL );
 			gl.enable(gl.TEXTURE_2D);
 			gl.enable(gl.CULL_FACE);
 			gl.cullFace(gl.BACK);
@@ -61,7 +64,7 @@ function WebGL(canvas){
 	//Private:	
 	function initGL(canvas){
 		try {
-			gl = canvas.getContext("experimental-webgl", { antialias: true });
+			gl = canvas.getContext("experimental-webgl", { antialias: true, alpha: false });
 			canvas.width = window.innerWidth;
 			canvas.height = window.innerHeight;
 			gl.viewportWidth = canvas.width;
@@ -111,6 +114,7 @@ function WebGL(canvas){
 				shaderProgram.lightingDirectionUniform = gl.getUniformLocation(shaderProgram, "uLightingDirection");
 				shaderProgram.directionalColorUniform = gl.getUniformLocation(shaderProgram, "uDirectionalColor");
 				shaderProgram.specularColorUniform = gl.getUniformLocation(shaderProgram, "uSpecularColor");
+				shaderProgram.alphaUniform = gl.getUniformLocation(shaderProgram, "uAlpha");
 				shaderProgram.samplerUniform = gl.getUniformLocation(shaderProgram, "uSampler");
 				
 				callback();

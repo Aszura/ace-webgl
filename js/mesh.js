@@ -3,59 +3,35 @@ function Mesh(context){
 	this.normals = [];
 	this.faces = [];
 	this.colors = [];
-	this.uvs = new Array();
+	this.uvs = [];
 	this.materialIndex;
 	this.texture = null;
 	this.vboOffset = 0;
 	this.iboOffset = 0;
 	this.lit = true;
+	this.mMatrix = mat4.create();
+	this.position = vec3.create();
 	var thisObj = this;
 	var gl = context;
-	var mMatrix = mat4.create();
+	this.alpha = 1.0;
+	this.transparent = false;
 	
-	this.Load = function(filename, position, quatRotation, scale, callback){
+	this.Load = function(filename, pos, quatRotation, vecScale, callback){
 		$.getJSON(filename, function(json){
-			mat4.fromRotationTranslation(mMatrix, quatRotation, position);
-			mat4.scale(mMatrix, mMatrix, scale);
+			mat4.fromRotationTranslation(thisObj.mMatrix, quatRotation, pos);
+			mat4.scale(thisObj.mMatrix, thisObj.mMatrix, vecScale);
+			vec3.copy(thisObj.position, pos);
 			parseModel(json, 1.0);
-			//thisObj.uvs[0] = json.uvs[0];
-			// for(var i = 0; i < json.vertices.length; i+=3){
-				// thisObj.vertices.push(vec3.fromValues(json.vertices[i], json.vertices[i+1], json.vertices[i+2]));
-			// }
-			// for(var i = 0; i < json.normals.length; i+=3){
-				// thisObj.normals.push(vec3.fromValues(json.normals[i], json.normals[i+1], json.normals[i+2]));
-			// }
-			// for(var i = 0; i < json.faces.length; i+=3){
-				// thisObj.faces.push(vec3.fromValues(json.faces[i],json.faces[i+1],json.faces[i+2]));
-			// }
-			// thisObj.vertices = json.vertices;
-			// thisObj.normals = json.normals;
-			// for(var i = 0; i < json.faces.length; i++){
-				// thisObj.faces.push(json.faces[i]);
-			// }
-			// for(var i = 0; i < json.uvs[0].length; i+=2)
-			// {
-				// thisObj.uvs.push(json.uvs[0][i]);
-				// thisObj.uvs.push(json.uvs[0][i+1]);
-				// thisObj.uvs.push(0);
-				// //thisObj.uvs.push(vec3.fromValues(json.uvs[0][i], json.uvs[0][i+1],0));
-			// }
-			loadTexture(json.materials[thisObj.materialIndex].mapDiffuse, function(){
+			thisObj.alpha = json.materials[thisObj.materialIndex].transparency;
+			thisObj.transparent = json.materials[thisObj.materialIndex].transparent;
+			if(json.materials[thisObj.materialIndex].mapDiffuse !== undefined){
+				loadTexture(json.materials[thisObj.materialIndex].mapDiffuse, function(){
+					callback();
+				});
+			}else{
 				callback();
-			});
+			}
 		});
-	};
-	
-	this.Translate = function(vec){
-		mat4.translate(mMatrix, mMatrix, vec);
-	};
-	
-	this.Rotate = function(rad, vec){
-		mat4.rotate(mMatrix, mMatrix, rad, vec);
-	};
-	
-	this.Scale = function(vec){
-		mat4.scale(mMatrix, mMatrix, scale);
 	};
 	
 	function handleTextureLoaded(image, texture) {
@@ -63,14 +39,15 @@ function Mesh(context){
 		gl.bindTexture(gl.TEXTURE_2D, texture);
 		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 		
 		//Anisotropic Filtering
-		var ext = gl.getExtension("MOZ_EXT_texture_filter_anisotropic");
-		if(ext == null){
-			ext = gl.getExtension("WEBKIT_EXT_texture_filter_anisotropic");
-		}
+		var ext = (
+			gl.getExtension('EXT_texture_filter_anisotropic') ||
+			gl.getExtension('MOZ_EXT_texture_filter_anisotropic') ||
+			gl.getExtension('WEBKIT_EXT_texture_filter_anisotropic')
+		);
 		if(ext != null){
 			var max_anisotropy = gl.getParameter(ext.MAX_TEXTURE_MAX_ANISOTROPY_EXT);
 			gl.texParameterf(gl.TEXTURE_2D, ext.TEXTURE_MAX_ANISOTROPY_EXT, max_anisotropy);
@@ -89,25 +66,31 @@ function Mesh(context){
 		thisObj.texture.image.src = "models/" + textureName;
     }
 	
-	this.Draw = function(shaderProgram, camera){
+	this.Draw = function(shaderProgram, camera){	
 		//bind textures and lit
 		gl.activeTexture(gl.TEXTURE0);
 		gl.bindTexture(gl.TEXTURE_2D, this.texture);
 		gl.uniform1i(shaderProgram.samplerUniform, 0);
 		gl.uniform1i(shaderProgram.lightsOnUniform, this.lit);
 		
-		//set model and normal matrices
-		gl.uniformMatrix4fv(shaderProgram.mMatrixUniform, false, mMatrix);
-		var normalMatrix = mat4.create();
-		mat4.multiply(normalMatrix, camera.vMatrix, mMatrix);
-		mat4.invert(normalMatrix, normalMatrix);
-		mat4.transpose(normalMatrix, normalMatrix);
-		gl.uniformMatrix4fv(shaderProgram.nMatrixUniform, false, normalMatrix);
+		//Alpha Blending
+		if(this.transparent && this.alpha < 1.0){
+			gl.enable( gl.BLEND );
+			gl.blendFunc( gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA );
+			//gl.disable(gl.DEPTH_TEST);
+		}else{
+			gl.disable(gl.BLEND);
+			//gl.enable(gl.DEPTH_TEST);
+		}
+		gl.uniform1f(shaderProgram.alphaUniform, this.alpha);
 		
 		//bind attributes and draw array
 		gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
 		gl.enableVertexAttribArray(shaderProgram.vertexNormalAttribute);
-		gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+		if(thisObj.uvs.length > 0){
+			gl.enableVertexAttribArray(shaderProgram.textureCoordAttribute);
+			gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, 2, gl.FLOAT, false, 0, this.vboOffset*4+this.vertices.length*4+this.normals.length*4);
+		}
 		gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, 3, gl.FLOAT, false, 0, this.vboOffset*4);
 		gl.vertexAttribPointer(shaderProgram.vertexNormalAttribute, 3, gl.FLOAT, false, 0, this.vboOffset*4+this.vertices.length*4);
 		gl.vertexAttribPointer(shaderProgram.textureCoordAttribute, 2, gl.FLOAT, false, 0, this.vboOffset*4+this.vertices.length*4+this.normals.length*4);

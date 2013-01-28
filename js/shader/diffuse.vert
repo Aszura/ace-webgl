@@ -28,10 +28,10 @@ void main(void) {
 		normal = normalize(aVertexNormal);
 		lightDir = normalize(vec3(uLightingDirection));
 		NdotL = max(dot(normal, lightDir), 0.0);
-		diffuse = vec4(uDirectionalColor,1.0);
+		diffuse = vec4(uDirectionalColor,0.5);
 		/* Compute the ambient and globalAmbient terms */
 
-		ambient = vec4(uAmbientColor,1.0);
+		ambient = vec4(uAmbientColor,0.0);
 		vFrontColor =  NdotL * diffuse + ambient;
 	}else{
 		vFrontColor = vec4(1.0,1.0,1.0,1.0);

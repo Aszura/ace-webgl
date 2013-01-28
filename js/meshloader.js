@@ -8,7 +8,7 @@ function MeshLoader(context){
 	
 	var thisObj = this;
 	
-	this.LoadScene = function(filename, callback){
+	this.LoadScene = function(filename, outNames, callback){
 		$.getJSON(filename, function(json){
 			var i = 0;
 			for(key in json.objects){
@@ -16,6 +16,7 @@ function MeshLoader(context){
 				var position = vec3.fromValues(json.objects[key].position[0],json.objects[key].position[1],json.objects[key].position[2]);
 				var quatRotation = quat.fromValues(json.objects[key].quaternion[0], json.objects[key].quaternion[1], json.objects[key].quaternion[2], json.objects[key].quaternion[3]);
 				var scale = vec3.fromValues(json.objects[key].scale[0], json.objects[key].scale[1], json.objects[key].scale[2]);
+				outNames.push(key);
 				thisObj.LoadMesh(key, objectName + key + ".js", position, quatRotation, scale, function(){
 					i++;
 					if(i == json.metadata.objects){
@@ -34,9 +35,11 @@ function MeshLoader(context){
 			mesh.iboOffset = iboSize;
 			vboSize += mesh.vertices.length;
 			vboSize += mesh.normals.length;
-			vboSize += mesh.uvs[0].length;
+			if(mesh.uvs.length > 0){
+				vboSize += mesh.uvs[0].length;
+			}
 			iboSize += mesh.faces.length;
-			callback();
+			callback(name);
 		});
 	};
 	
@@ -49,8 +52,10 @@ function MeshLoader(context){
 			offset += this.meshes[key].vertices.length;
 			gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, new Float32Array(this.meshes[key].normals));
 			offset += this.meshes[key].normals.length;
-			gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, new Float32Array(this.meshes[key].uvs[0]));
-			offset += this.meshes[key].uvs[0].length;
+			if(this.meshes[key].uvs.length > 0){
+				gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, new Float32Array(this.meshes[key].uvs[0]));
+				offset += this.meshes[key].uvs[0].length;
+			}
 		}
 
 		offset = 0;
