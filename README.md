@@ -13,18 +13,29 @@ Test page: http://www.notebook-play.de/ace-webgl/
 Features
 =========
 -) WebGL Browser Graphics
+
 -) First Person Camera
+
 -) Directional Lighting
+
 -) Vertex & Fragment Shaders
+
 -) Texturing
+
 -) Animation
+
 -) Level of Detail
+
 -) Alpha Blending
+
 -) JSON Importer/Blender Exporter (Modified version of THREE.js)
+
 -) Fullscreen & Pointer Lock
 
 Used libraries
 =========
 -) glMatrix
+
 -) webGLUtils by Google
+
 -) jQuery
