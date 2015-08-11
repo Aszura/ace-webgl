@@ -11,7 +11,7 @@ Click for fullscreen and mouse lock.
 
 The red cube in the middle changes its mesh + texture (from red to blue) depending on the distance (Level of Detail).
 
-Test page: http://www.notebook-play.de/ace-webgl/
+Test page: http://www.gamedevpuzzler.com/ace-webgl/
 
 Features
 =========
